@@ -1,4 +1,4 @@
-# BBits Studio
+# BBits Frames
 
 A standalone GUI dashboard tool for working with HyperFrames motion graphics scene projects.
 

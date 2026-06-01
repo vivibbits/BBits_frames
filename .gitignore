@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.bak
+extracts/
+renders/
+uploads/
+bbits-config.json

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BBITS Frame</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css?v=1.0.5"/>
+</head>
+<body>
+
+<!-- ══ TOP BAR ══════════════════════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-left">
+    <div class="logo">
+      <span class="logo-diamond">◆</span>
+      <span class="logo-text">BBITS <span class="logo-studio">FRAME</span></span>
+    </div>
+    <div class="project-badge" id="project-badge">No project loaded</div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" id="btn-toggle-console" style="margin-right:8px">📟 Console</button>
+    <button class="btn btn-ghost" id="btn-load-project">⊕ Load Project</button>
+    <button class="btn btn-primary" id="btn-quick-render" disabled>▶ Render</button>
+    <div class="render-status" id="render-status"></div>
+  </div>
+</header>
+
+<!-- ══ LOAD DIALOG ══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="load-modal">
+  <div class="modal">
+    <div class="modal-title">Load HyperFrames Project</div>
+    <div class="modal-body">
+      <label class="field-label">Project Directory (absolute path to folder with index.html)</label>
+      <input type="text" class="field-input" id="project-path-input" placeholder="e.g. f:\projects\MyHyperFramesProject"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancel-load">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-load">Load</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EXTRACT RENDER DIALOG ════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="render-modal">
+  <div class="modal modal-wide">
+    <div class="modal-title">Render Extracted Scenes</div>
+    <div class="modal-body">
+      <label class="field-label">Output filename (no extension)</label>
+      <input type="text" class="field-input" id="render-output-name" placeholder="scene_07_extract"/>
+      <label class="field-label" style="margin-top:16px">Layer / Export Mode</label>
+      <div class="radio-group">
+        <label class="radio-label"><input type="radio" name="render-mode" value="normal" checked/> Normal (dark bg)</label>
+        <label class="radio-label"><input type="radio" name="render-mode" value="greenscreen"/> Greenscreen (chroma key)</label>
+        <label class="radio-label"><input type="radio" name="render-mode" value="alpha"/> PNG Sequence (alpha)</label>
+      </div>
+      <div style="margin-top:16px">
+        <label class="toggle-label" title="Removes the bottom-left scene info text (Section · Number · Title) from the render output">
+          <input type="checkbox" id="chk-render-strip-hud" checked/>
+          🏷 Hide scene labels
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancel-render">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-render">Start Render</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN LAYOUT ══════════════════════════════════════════════════════════ -->
+<main class="main-layout">
+
+  <!-- Left-side workspace area which holds tabs and tab-panels -->
+  <div class="workspace-area">
+    <!-- ── TAB BAR ─────────────────────────────────────────────────────────── -->
+    <nav class="tab-bar">
+      <button class="tab active" data-tab="extractor">🎬 Scene Extractor</button>
+      <button class="tab" data-tab="comp-editor">🎭 Comp Editor</button>
+      <button class="tab" data-tab="assets">🖼 Asset Manager</button>
+      <button class="tab" data-tab="layers">🎭 Layer Control</button>
+    </nav>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: SCENE EXTRACTOR                                                  -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-extractor">
+    <div class="panel-toolbar">
+      <div class="toolbar-left">
+        <button class="btn btn-sm btn-ghost" id="btn-select-all">Select All</button>
+        <button class="btn btn-sm btn-ghost" id="btn-deselect-all">Deselect</button>
+        <span class="toolbar-count" id="selected-count">0 selected</span>
+      </div>
+      <div class="toolbar-right">
+        <label class="toggle-label" title="Removes the bottom-left scene info text (Section · Number · Title) from all exports">
+          <input type="checkbox" id="chk-strip-hud" checked/>
+          🏷 Hide scene labels
+        </label>
+        <label class="field-label-inline">Duration per scene (s)</label>
+        <input type="number" class="field-input-sm" id="scene-duration" value="8" min="1" max="60"/>
+        <label class="field-label-inline">Layer Mode</label>
+        <select class="field-input-sm" id="extract-layer-mode" style="width: 130px; text-align: left;">
+          <option value="normal">◼ Normal</option>
+          <option value="greenscreen">🟩 Greenscreen</option>
+          <option value="alpha">🎭 Alpha Mode</option>
+        </select>
+        <button class="btn btn-accent" id="btn-extract" disabled>⊡ Extract Selected</button>
+        <button class="btn btn-primary" id="btn-batch-render" disabled style="margin-left: 8px;">💥 Batch Render</button>
+      </div>
+    </div>
+
+    <div class="scene-grid" id="scene-grid">
+      <div class="empty-state" id="scene-empty">Load a project to see scenes</div>
+    </div>
+
+    <!-- Extracted files list -->
+    <div class="extracts-bar" id="extracts-bar" style="display:none">
+      <div class="extracts-title">Extracted Files</div>
+      <div class="extracts-list" id="extracts-list"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: COMPOSITION EDITOR                                               -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel hidden" id="tab-comp-editor">
+    <div class="comp-editor-layout">
+      <!-- Properties & File Selector Side Panel -->
+      <aside class="comp-editor-sidebar">
+        <div class="sidebar-section">
+          <h3>Select Target Layer</h3>
+          <div class="form-row">
+            <label class="field-label">Active Scene</label>
+            <select class="field-input" id="comp-scene-select">
+              <option value="">-- Choose Scene --</option>
+            </select>
+            <label class="toggle-label" style="margin-top: 8px; font-size: 11px; color: var(--text-dim); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="chk-filter-editable" checked style="accent-color: var(--cyan); width: 14px; height: 14px;"/>
+              ✦ Only show editable scenes
+            </label>
+          </div>
+          <div class="form-row" style="margin-top: 12px;">
+            <label class="field-label">Editable Element</label>
+            <select class="field-input" id="comp-element-select" disabled>
+              <option value="">-- Choose Element --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sidebar-section hidden" id="comp-asset-override-section">
+          <h3>Media Override</h3>
+          <div class="form-row">
+            <label class="field-label">Nesting Mode</label>
+            <div class="radio-group" style="margin-top:8px">
+              <label class="radio-label"><input type="radio" name="comp-fit-mode" value="fit" checked/> Fit Parent (Nested)</label>
+              <label class="radio-label"><input type="radio" name="comp-fit-mode" value="standalone"/> Standalone (Overlay)</label>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:12px">
+            <label class="field-label">Swap File (Image/Video)</label>
+            <button class="btn btn-sm btn-accent" id="btn-comp-upload-media" style="width:100%">⊕ Upload Media</button>
+            <input type="file" id="comp-media-input" style="display:none" accept="image/*,video/*"/>
+            <div class="comp-media-preview" id="comp-media-preview" style="margin-top:8px">
+              <span style="font-size:11px;color:var(--text-faint)">No media swapped</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section hidden" id="comp-properties-section">
+          <h3>Keyframe Properties</h3>
+          <div class="property-slider">
+            <div class="slider-label"><span>Position X</span><span id="val-pos-x">0px</span></div>
+            <input type="range" id="slider-pos-x" min="-1000" max="1000" value="0"/>
+          </div>
+          <div class="property-slider">
+            <div class="slider-label"><span>Position Y</span><span id="val-pos-y">0px</span></div>
+            <input type="range" id="slider-pos-y" min="-1000" max="1000" value="0"/>
+          </div>
+          <div class="property-slider">
+            <div class="slider-label"><span>Scale</span><span id="val-scale">1.00</span></div>
+            <input type="range" id="slider-scale" min="0.1" max="4" step="0.01" value="1"/>
+          </div>
+          <div class="property-slider">
+            <div class="slider-label"><span>Rotation</span><span id="val-rotation">0°</span></div>
+            <input type="range" id="slider-rotation" min="-360" max="360" value="0"/>
+          </div>
+          <div class="property-slider">
+            <div class="slider-label"><span>Opacity</span><span id="val-opacity">1.00</span></div>
+            <input type="range" id="slider-opacity" min="0" max="1" step="0.01" value="1"/>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Preview Canvas Area -->
+      <section class="comp-editor-main">
+        <div class="canvas-container">
+          <div class="canvas-viewport" id="comp-canvas-viewport">
+            <iframe id="comp-preview-iframe" class="preview-iframe" src="" style="display:none"></iframe>
+            <div class="canvas-empty" id="comp-canvas-empty">
+              Select a scene and element to begin editing
+            </div>
+          </div>
+        </div>
+
+        <!-- DaVinci/AE Bottom Timeline Keyframe Editor -->
+        <footer class="comp-editor-bottom">
+          <div class="timeline-toolbar">
+            <div class="toolbar-left">
+              <button class="btn btn-sm btn-accent" id="btn-add-keyframe" disabled>◆ Add Keyframe</button>
+              <button class="btn btn-sm btn-danger" id="btn-delete-keyframe" disabled>✕ Delete Keyframe</button>
+            </div>
+            <div class="toolbar-middle">
+              <button class="btn-playpause" id="btn-comp-play" disabled>▶</button>
+              <input type="range" id="timeline-scrubber" min="0" max="5000" value="0" step="10" disabled/>
+            </div>
+            <div class="toolbar-right">
+              <span class="timeline-playhead-label" id="timeline-time-label">0.00s / 5.00s</span>
+            </div>
+          </div>
+          <div class="timeline-track-container">
+            <div class="timeline-ruler" id="timeline-ruler">
+              <!-- Ruler tick marks are absolute-positioned here -->
+            </div>
+            <div class="timeline-track" id="timeline-track">
+              <!-- Draggable Diamond markers (◆) are placed here absolute-positioned -->
+              <div class="timeline-playhead-needle" id="timeline-playhead-needle" style="left: 0%"></div>
+            </div>
+          </div>
+        </footer>
+      </section>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: ASSET MANAGER                                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel hidden" id="tab-assets">
+    <div class="panel-toolbar">
+      <div class="toolbar-left">
+        <input type="text" class="field-input search-input" id="asset-search" placeholder="🔍 Filter assets..."/>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-sm btn-ghost" id="btn-restore-backup">↺ Restore Backup</button>
+        <button class="btn btn-accent" id="btn-upload-new">⊕ Upload New Asset</button>
+        <input type="file" id="global-upload-input" style="display:none" accept="image/*,video/*"/>
+      </div>
+    </div>
+
+    <div class="asset-grid" id="asset-grid">
+      <div class="empty-state">Load a project to see assets</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: LAYER CONTROL                                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="tab-panel hidden" id="tab-layers">
+    <div class="panel-toolbar" style="margin-bottom: 12px;">
+      <div class="toolbar-left">
+        <span class="field-label-inline" style="font-weight: 600; color: var(--text);">Set All Scenes To:</span>
+        <button class="btn btn-sm btn-ghost" id="btn-layer-all-normal">◼ Normal</button>
+        <button class="btn btn-sm btn-accent" id="btn-layer-all-greenscreen">🟩 Greenscreen</button>
+        <button class="btn btn-sm btn-primary" id="btn-layer-all-overlay">🎭 Overlay</button>
+      </div>
+    </div>
+    <div class="layer-intro">
+      <p>Set each scene's export mode. <strong>Normal</strong> = standard dark background. <strong>Greenscreen</strong> = solid #00FF00, chroma-key in DaVinci Resolve. <strong>Overlay</strong> = your talking-head footage goes on top of the motion graphic.</p>
+    </div>
+    <div class="layer-grid" id="layer-grid">
+      <!-- Populated dynamically in app.js -->
+    </div>
+  </div> <!-- Close tab-layers -->
+</div> <!-- Close workspace-area -->
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- SIDEBAR CONSOLE (Collapsible right column)                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <aside class="sidebar-console" id="sidebar-console">
+    <div class="console-resizer" id="console-resizer"></div>
+    <div class="console-toolbar">
+      <span class="console-status-dot" id="console-dot"></span>
+      <span id="console-status-label">Idle</span>
+      <button class="btn btn-sm btn-danger" id="btn-cancel-render-console" style="margin-left:auto">✕ Cancel</button>
+      <button class="btn btn-sm btn-ghost" id="btn-clear-console">Clear</button>
+    </div>
+    <pre class="console-output" id="console-output">BBITS Frame ready. Load a project to get started.</pre>
+  </aside>
+
+</main>
+
+<!-- ══ REPLACE ASSET DIALOG ════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="replace-modal">
+  <div class="modal">
+    <div class="modal-title">Replace Asset</div>
+    <div class="modal-body">
+      <div class="replace-old" id="replace-old-path"></div>
+      <label class="field-label" style="margin-top:16px">Upload replacement file</label>
+      <input type="file" id="replace-file-input" accept="image/*,video/*" style="margin-top:8px"/>
+      <div class="replace-preview-wrap">
+        <div class="replace-preview-label">Old</div>
+        <img class="replace-preview-img" id="replace-preview-old" src="" alt=""/>
+        <div class="replace-preview-label">New</div>
+        <img class="replace-preview-img" id="replace-preview-new" src="" alt="" style="opacity:0.3"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btn-cancel-replace">Cancel</button>
+      <button class="btn btn-primary" id="btn-confirm-replace">Replace</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js?v=1.0.5"></script>
+</body>
+</html>

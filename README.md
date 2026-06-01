@@ -4,6 +4,10 @@ A standalone GUI dashboard tool for working with HyperFrames motion graphics sce
 
 **Works with any HyperFrames project**.
 
+![Dashboard Preview](public/UI_preview1.png)
+![Comp Editor Preview](public/UI_preview2.png)
+![Assets and Layers Preview](public/UI_preview3.png)
+
 ---
 
 ## Quick Start
@@ -22,7 +26,13 @@ A standalone GUI dashboard tool for working with HyperFrames motion graphics sce
 - **Strip HUD** toggle removes `<SceneLabel>` debug overlays from the output
 - Set per-scene duration (default 8 seconds per scene)
 - **Preview** the extracted HTML directly in your browser
+- **Alpha Layer Export & Renders**: Support for exporting with a fully transparent background (`transparent`) or solid `#00b140` greenscreen, allowing seamless overlaying/compositing inside video editing suites like DaVinci Resolve or Premiere Pro.
 - **Render** it to MP4 or transparent PNG sequence with one click
+
+### 🎭 Comp Editor (Element Swap)
+- Swap out key assets, logos, and adjust positions, scales, rotation, and opacity with keyframe control.
+- > [!IMPORTANT]
+  > **Note on Element Swapping**: To use the element swap features, you must first ask your AI agent to modify the corresponding scene JSX files to define the editable targets/elements.
 
 ### 🖼 Asset Manager
 - See every image/video referenced across all JSX scene files

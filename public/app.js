@@ -544,6 +544,62 @@ $('btn-layer-all-overlay')?.addEventListener('click', () => setAllSceneLayers('o
 
 // ─── COMPOSITION EDITOR INTEGRATION ─────────────────────────────────────────
 
+const COMP_DEFAULTS_MAP = {
+  Logo1: { src: 'uploads/openclaw_logo.png', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+  Logo2: { src: 'uploads/hermesagent.png', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+  Logo3: { src: 'uploads/claude-ai_logo.svg', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+  Logo: { src: 'default_logo', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+  Mockup: { src: 'default_mockup', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
+  Avatar: { src: 'uploads/Vivi_full_front.png', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 }
+};
+
+function renderVisualElementsGrid(keys) {
+  const grid = $('comp-element-visual-grid');
+  if (!grid) return;
+  
+  if (!keys.length) {
+    grid.innerHTML = '<div class="element-empty-msg">No editable elements (preview only)</div>';
+    return;
+  }
+  
+  grid.innerHTML = '';
+  const sceneNum = editorState.activeSceneNum;
+  
+  keys.forEach(k => {
+    const overrides = editorState.config.scenes?.[sceneNum]?.[k] || {};
+    const defaultSrc = COMP_DEFAULTS_MAP[k]?.src || '';
+    const currentSrc = overrides.src || defaultSrc;
+    
+    const isImg = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(currentSrc);
+    const thumbUrl = (isImg && currentSrc) ? '/uploads/' + currentSrc.replace('uploads/','') : '';
+    
+    const card = document.createElement('div');
+    card.className = 'element-visual-card' + (editorState.activeElementKey === k ? ' selected' : '');
+    card.dataset.key = k;
+    
+    card.innerHTML = `
+      <div class="element-visual-thumb">
+        ${thumbUrl ? `<img src="${thumbUrl}" alt="" onerror="this.style.display='none'; this.parentElement.textContent='🎭'"/>` : '🎭'}
+      </div>
+      <div class="element-visual-info">
+        <div class="element-visual-name">${k}</div>
+        <div class="element-visual-path" title="${currentSrc || 'No media swapped'}">${currentSrc || 'Default properties'}</div>
+      </div>
+    `;
+    
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.element-visual-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      
+      const elSel = $('comp-element-select');
+      elSel.value = k;
+      elSel.dispatchEvent(new Event('change'));
+    });
+    
+    grid.appendChild(card);
+  });
+}
+
 let editorState = {
   activeSceneNum: null,
   activeElementKey: null,
@@ -629,11 +685,13 @@ $('comp-scene-select')?.addEventListener('change', async (e) => {
       opt.textContent = k;
       elSel.appendChild(opt);
     });
+    renderVisualElementsGrid(allKeys);
   } else {
     // No editable elements for this scene — disable element picker, just show preview
     elSel.disabled = true;
     elSel.innerHTML = '<option value="">No elements (preview only)</option>';
     $('btn-add-custom-element').disabled = false;
+    renderVisualElementsGrid([]);
   }
   
   // Render loading state on canvas
@@ -758,6 +816,14 @@ $('btn-confirm-custom-element')?.addEventListener('click', async () => {
   
   elSel.value = name;
   hide('custom-element-input-row');
+  
+  // Re-render visual elements grid with the new custom element included
+  const currentKeys = [];
+  for (let i = 1; i < elSel.options.length; i++) {
+    currentKeys.push(elSel.options[i].value);
+  }
+  renderVisualElementsGrid(currentKeys);
+  
   elSel.dispatchEvent(new Event('change'));
 });
 
@@ -807,6 +873,14 @@ async function saveActiveElementConfig(elementData) {
     
     renderTimelineKeyframes();
     syncSlidersToActiveTime();
+    
+    // Re-render visual grid to update paths/thumbs
+    const currentKeys = [];
+    const elSel = $('comp-element-select');
+    for (let i = 1; i < elSel.options.length; i++) {
+      currentKeys.push(elSel.options[i].value);
+    }
+    renderVisualElementsGrid(currentKeys);
   }
 }
 
@@ -828,15 +902,7 @@ function syncSlidersToActiveTime() {
   const key = editorState.activeElementKey;
   if (!sceneNum || !key) return;
   
-  const defaultsMap = {
-    Logo1: { src: 'uploads/openclaw_logo.png', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
-    Logo2: { src: 'uploads/hermesagent.png', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
-    Logo3: { src: 'uploads/claude-ai_logo.svg', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
-    Logo: { src: 'default_logo', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
-    Mockup: { src: 'default_mockup', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 },
-    Avatar: { src: 'uploads/Vivi_full_front.png', x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 }
-  };
-  const defaults = defaultsMap[key] || { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 };
+  const defaults = COMP_DEFAULTS_MAP[key] || { x: 0, y: 0, scale: 1, rotation: 0, opacity: 1 };
   
   // Calculate interpolated values for active playhead time
   const t = editorState.activeTime / 1000;

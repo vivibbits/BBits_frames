@@ -141,12 +141,16 @@
             </label>
           </div>
           <div class="form-row" style="margin-top: 12px;">
-            <label class="field-label">Editable Element</label>
-            <div style="display: flex; gap: 8px;">
-              <select class="field-input" id="comp-element-select" disabled style="flex: 1;">
-                <option value="">-- Choose Element --</option>
-              </select>
-              <button class="btn btn-sm btn-ghost" id="btn-add-custom-element" disabled title="Add Custom Element Key" style="padding: 0 10px;">+</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="field-label" style="margin-bottom: 0;">Editable Elements</label>
+              <button class="btn btn-sm btn-ghost" id="btn-add-custom-element" disabled title="Add Custom Element Key" style="padding: 2px 8px;">+ Add Custom</button>
+            </div>
+            <!-- Keep hidden to preserve compatibility with existing JS logic -->
+            <select class="field-input" id="comp-element-select" disabled style="display: none;">
+              <option value="">-- Choose Element --</option>
+            </select>
+            <div class="element-visual-grid" id="comp-element-visual-grid">
+              <div class="element-empty-msg">Select a scene to see editable elements</div>
             </div>
           </div>
           <div class="form-row hidden" id="custom-element-input-row" style="margin-top: 8px;">

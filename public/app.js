@@ -603,6 +603,7 @@ $('comp-scene-select')?.addEventListener('change', async (e) => {
     editorState.activeElementKey = null;
     $('comp-element-select').disabled = true;
     $('comp-element-select').value = '';
+    $('btn-add-custom-element').disabled = true;
     $('comp-preview-iframe').style.display = 'none';
     $('comp-canvas-empty').style.display = '';
     hideSidebarSections();
@@ -620,6 +621,7 @@ $('comp-scene-select')?.addEventListener('change', async (e) => {
   
   if (allKeys.length > 0) {
     elSel.disabled = false;
+    $('btn-add-custom-element').disabled = false;
     elSel.innerHTML = '<option value="">-- Choose Element --</option>';
     allKeys.forEach(k => {
       const opt = document.createElement('option');
@@ -631,6 +633,7 @@ $('comp-scene-select')?.addEventListener('change', async (e) => {
     // No editable elements for this scene — disable element picker, just show preview
     elSel.disabled = true;
     elSel.innerHTML = '<option value="">No elements (preview only)</option>';
+    $('btn-add-custom-element').disabled = false;
   }
   
   // Render loading state on canvas
@@ -710,9 +713,58 @@ $('comp-element-select')?.addEventListener('change', async (e) => {
   syncSlidersToActiveTime();
 });
 
+// Custom Element Input Logic
+$('btn-add-custom-element')?.addEventListener('click', () => {
+  show('custom-element-input-row');
+  $('custom-element-name').value = '';
+  $('custom-element-name').focus();
+});
+
+$('btn-cancel-custom-element')?.addEventListener('click', () => {
+  hide('custom-element-input-row');
+});
+
+$('btn-confirm-custom-element')?.addEventListener('click', async () => {
+  const name = $('custom-element-name').value.trim();
+  if (!name) return;
+  
+  const sceneNum = editorState.activeSceneNum;
+  if (!sceneNum) return;
+  
+  // Add to dropdown list and select it
+  const elSel = $('comp-element-select');
+  
+  // If it was "No elements (preview only)", enable it
+  if (elSel.disabled) {
+    elSel.disabled = false;
+    elSel.innerHTML = '<option value="">-- Choose Element --</option>';
+  }
+  
+  // Check if option already exists
+  let exists = false;
+  for (let i = 0; i < elSel.options.length; i++) {
+    if (elSel.options[i].value === name) {
+      exists = true;
+      break;
+    }
+  }
+  
+  if (!exists) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    elSel.appendChild(opt);
+  }
+  
+  elSel.value = name;
+  hide('custom-element-input-row');
+  elSel.dispatchEvent(new Event('change'));
+});
+
 function hideSidebarSections() {
   hide('comp-asset-override-section');
   hide('comp-properties-section');
+  hide('custom-element-input-row');
   $('btn-add-keyframe').disabled = true;
   $('btn-delete-keyframe').disabled = true;
   $('btn-comp-play').disabled = true;

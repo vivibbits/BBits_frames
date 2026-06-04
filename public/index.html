@@ -142,9 +142,19 @@
           </div>
           <div class="form-row" style="margin-top: 12px;">
             <label class="field-label">Editable Element</label>
-            <select class="field-input" id="comp-element-select" disabled>
-              <option value="">-- Choose Element --</option>
-            </select>
+            <div style="display: flex; gap: 8px;">
+              <select class="field-input" id="comp-element-select" disabled style="flex: 1;">
+                <option value="">-- Choose Element --</option>
+              </select>
+              <button class="btn btn-sm btn-ghost" id="btn-add-custom-element" disabled title="Add Custom Element Key" style="padding: 0 10px;">+</button>
+            </div>
+          </div>
+          <div class="form-row hidden" id="custom-element-input-row" style="margin-top: 8px;">
+            <input type="text" class="field-input" id="custom-element-name" placeholder="Type custom element name..."/>
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <button class="btn btn-sm btn-ghost" id="btn-cancel-custom-element" style="flex: 1;">Cancel</button>
+              <button class="btn btn-sm btn-primary" id="btn-confirm-custom-element" style="flex: 1;">Add</button>
+            </div>
           </div>
         </div>
 

@@ -41,7 +41,7 @@ app.post('/api/project/load', (req, res) => {
     for (const s of projectData.scenes) {
       if (!layerConfig[s.num]) layerConfig[s.num] = 'normal';
     }
-    res.json({ ok: true, scenes: projectData.scenes, assets: projectData.assets });
+    res.json({ ok: true, scenes: projectData.scenes, assets: projectData.assets, editableElements: projectData.editableElements });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -49,7 +49,7 @@ app.post('/api/project/load', (req, res) => {
 
 app.get('/api/project/info', (req, res) => {
   if (!projectData) return res.json({ loaded: false });
-  res.json({ loaded: true, dir: projectDir, scenes: projectData.scenes, assets: projectData.assets, layerConfig });
+  res.json({ loaded: true, dir: projectDir, scenes: projectData.scenes, assets: projectData.assets, editableElements: projectData.editableElements, layerConfig });
 });
 
 // Reload when JSX files change

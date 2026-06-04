@@ -6,6 +6,7 @@ let state = {
   projectDir: '',
   scenes: [],
   assets: {},
+  editableElements: {},
   layerConfig: {},
   selectedScenes: new Set(),
   extracts: [],
@@ -170,6 +171,7 @@ function applyProject(data) {
   state.loaded    = true;
   state.scenes    = data.scenes || [];
   state.assets    = data.assets || {};
+  state.editableElements = data.editableElements || {};
   state.layerConfig = data.layerConfig || {};
   state.selectedScenes.clear();
 
@@ -629,7 +631,9 @@ function populateCompSceneSelect() {
   
   state.scenes.forEach(s => {
     const readableName = s.fn.replace(/^Scene\d+/, '').replace(/([A-Z])/g, ' $1').trim();
-    const hasElements = (editorState.elementsMap[s.num] || []).length > 0;
+    const dynamicElements = state.editableElements[s.num] || [];
+    const hardcodedElements = editorState.elementsMap[s.num] || [];
+    const hasElements = dynamicElements.length > 0 || hardcodedElements.length > 0;
     
     if (showOnlyEditable && !hasElements) {
       return; // Skip non-editable scenes
@@ -669,11 +673,12 @@ $('comp-scene-select')?.addEventListener('change', async (e) => {
   editorState.activeSceneNum = sceneNum;
   editorState.activeElementKey = null;
   
-  // Populate element dropdown — build from elementsMap + any keys found in config
+  // Populate element dropdown — build from elementsMap + dynamically parsed elements + any keys found in config
   const elSel = $('comp-element-select');
   const configKeys = Object.keys((editorState.config.scenes || {})[sceneNum] || {});
   const hardcodedKeys = editorState.elementsMap[sceneNum] || [];
-  const allKeys = [...new Set([...hardcodedKeys, ...configKeys])];
+  const dynamicKeys = state.editableElements[sceneNum] || [];
+  const allKeys = [...new Set([...hardcodedKeys, ...dynamicKeys, ...configKeys])];
   
   if (allKeys.length > 0) {
     elSel.disabled = false;
